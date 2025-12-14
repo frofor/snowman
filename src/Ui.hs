@@ -8,8 +8,9 @@ module Ui (
   )
 where
 
-import Board (Board, Tile (..))
-import Player (Player (..))
+import Board (Board, Tile (Block, Empty, Head, Tail))
+import Control.Monad (void)
+import Player (Player (Blue, Red))
 import System.Console.ANSI (clearScreen)
 
 drawUi :: Board -> IO ()
@@ -23,7 +24,7 @@ drawUi board = do
   drawBoard board
 
 drawBoard :: Board -> IO ()
-drawBoard = mapM_ (putStrLn . unwords . map showTile)
+drawBoard = mapM_ $ putStrLn . unwords . map showTile
 
 showTile :: Tile -> String
 showTile Empty = "."
@@ -57,4 +58,4 @@ warn text = do
   putStrLn ""
   putStrLn text
   putStrLn "Press any key to continue..."
-  getChar >> pure ()
+  void getChar

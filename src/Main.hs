@@ -1,6 +1,12 @@
 import Board (Board, initBoard)
-import Game (GameState (..), MoveDirection (..), MoveError (..), getGameState, move)
-import Player (Player (..), nextPlayer)
+import Game
+  ( GameState (Finished, Ongoing, Trapped),
+    MoveDirection (MoveLeft, MoveRight, MoveUp),
+    MoveError (Occupied, OutOfBounds),
+    getGameState,
+    move,
+  )
+import Player (Player (Red), nextPlayer)
 import System.Exit (exitSuccess)
 import System.IO (BufferMode (NoBuffering), hSetBuffering, hSetEcho, stdin)
 import Ui (drawFinished, drawTrapped, drawUi, warnInvalidInput, warnOccupied, warnOutOfBounds)

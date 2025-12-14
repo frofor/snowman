@@ -1,6 +1,6 @@
 module Board (Board, Tile (..), Vec, findHead, initBoard) where
 
-import Player (Player (..))
+import Player (Player (Red))
 
 type Board = [[Tile]]
 

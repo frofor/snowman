@@ -1,6 +1,6 @@
 module Game (GameState (..), MoveDirection (..), MoveError (..), getGameState, move) where
 
-import Board (Board, Tile (..), Vec, findHead)
+import Board (Board, Tile (Empty, Head, Tail), Vec, findHead)
 import Player (Player, prevPlayer)
 
 data GameState = Ongoing | Finished | Trapped deriving (Eq)
