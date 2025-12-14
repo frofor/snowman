@@ -1,0 +1,18 @@
+cabal-version:  3.14
+name:           snowman
+version:        0.1.0.0
+license-file:   COPYING
+author:         frofor
+maintainer:     18nraywczifc@protonmail.com
+build-type:     Simple
+
+common warnings
+    ghc-options: -Wall
+
+executable snowman
+    import:            warnings
+    main-is:           Main.hs
+    hs-source-dirs:    src
+    build-depends:     ansi-terminal ^>=1.1.4, base ^>=4.20.0.0,
+    other-modules:     Board, Game, Player, Ui
+    default-language:  GHC2024
