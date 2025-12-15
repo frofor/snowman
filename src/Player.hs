@@ -1,10 +1,6 @@
-module Player (Player (..), nextPlayer, prevPlayer) where
+module Player (Player (..), nextPlayer) where
 
 data Player = Red | Blue deriving (Eq)
-
-prevPlayer :: Player -> Player
-prevPlayer Red = Blue
-prevPlayer Blue = Red
 
 nextPlayer :: Player -> Player
 nextPlayer Red = Blue
