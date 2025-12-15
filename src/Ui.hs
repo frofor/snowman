@@ -1,14 +1,15 @@
-module Ui (
-    drawFinished,
+module Ui
+  ( drawFinished,
     drawTrapped,
     drawUi,
+    warnBoardParseError,
     warnInvalidInput,
     warnOccupied,
     warnOutOfBounds,
   )
 where
 
-import Board (Board, Tile (Block, Empty, Head, Tail))
+import Board (Board, Tile (TileBlock, TileEmpty, TileFinish, TileHead, TileTail))
 import Control.Monad (void)
 import Player (Player (Blue, Red))
 import System.Console.ANSI (clearScreen)
@@ -27,25 +28,29 @@ drawBoard :: Board -> IO ()
 drawBoard = mapM_ $ putStrLn . unwords . map showTile
 
 showTile :: Tile -> String
-showTile Empty = "."
-showTile (Head Red) = "\ESC[31m@\ESC[0m"
-showTile (Head Blue) = "\ESC[34m^\ESC[0m"
-showTile (Tail Red) = "\ESC[31m*\ESC[0m"
-showTile (Tail Blue) = "\ESC[34m*\ESC[0m"
-showTile Block = " "
+showTile TileEmpty = "."
+showTile (TileHead Red) = "\ESC[31m@\ESC[0m"
+showTile (TileHead Blue) = "\ESC[34m^\ESC[0m"
+showTile (TileTail Red) = "\ESC[31m*\ESC[0m"
+showTile (TileTail Blue) = "\ESC[34m*\ESC[0m"
+showTile TileFinish = "~"
+showTile TileBlock = "x"
 
 drawFinished :: Player -> IO ()
-drawFinished player = putStrLn $ showPlayer player ++ " reached to the top!"
+drawFinished = putStrLn . (++ " finished the game!") . showPlayer
 
 drawTrapped :: Player -> IO ()
-drawTrapped player = putStrLn $ showPlayer player ++ " trapped other player!"
+drawTrapped = putStrLn . (++ " trapped other player!") . showPlayer
 
 showPlayer :: Player -> String
 showPlayer Red = "\ESC[31mRED\ESC[0m"
 showPlayer Blue = "\ESC[34mBLUE\ESC[0m"
 
+warnBoardParseError :: IO ()
+warnBoardParseError = warn "Can't parse board file!"
+
 warnInvalidInput :: Char -> IO ()
-warnInvalidInput input = warn $ "Invalid input: '" ++ [input] ++ "'"
+warnInvalidInput = warn . ("Invalid input: '" ++) . show
 
 warnOutOfBounds :: IO ()
 warnOutOfBounds = warn "Can't move out of bounds!"

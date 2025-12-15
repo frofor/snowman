@@ -1,45 +1,49 @@
-import Board (Board, initBoard)
 import Game
-  ( GameState (Finished, Ongoing, Trapped),
+  ( Game (Game, board, player),
     MoveDirection (MoveLeft, MoveRight, MoveUp),
-    MoveError (Occupied, OutOfBounds),
-    getGameState,
+    MoveError (MoveFinished, MoveOccupied, MoveOutOfBounds, MoveTrapped),
     move,
   )
-import Player (Player (Red), nextPlayer)
-import System.Exit (exitSuccess)
+import Player (Player (Red))
+import Resource (loadRandomBoard)
+import System.Exit (exitFailure, exitSuccess)
 import System.IO (BufferMode (NoBuffering), hSetBuffering, hSetEcho, stdin)
-import Ui (drawFinished, drawTrapped, drawUi, warnInvalidInput, warnOccupied, warnOutOfBounds)
+import Ui
+  ( drawFinished,
+    drawTrapped,
+    drawUi,
+    warnBoardParseError,
+    warnInvalidInput,
+    warnOccupied,
+    warnOutOfBounds,
+  )
 
 main :: IO ()
 main = do
   hSetBuffering stdin NoBuffering
   hSetEcho stdin False
-  repl (nextPlayer Red) initBoard
 
-repl :: Player -> Board -> IO ()
-repl player board = do
+  board <- loadRandomBoard
+  board' <- maybe (warnBoardParseError >> exitFailure) pure board
+  gameLoop Game {board = board', player = Red}
+
+gameLoop :: Game -> IO ()
+gameLoop game@Game {board} = do
   drawUi board
 
-  case getGameState board of
-    Ongoing -> pure ()
-    Finished -> drawFinished player >> exitSuccess
-    Trapped -> drawTrapped player >> exitSuccess
-
   input <- getChar
-  board' <- case input of
-    'k' -> tryMove MoveUp player board
-    'h' -> tryMove MoveLeft player board
-    'l' -> tryMove MoveRight player board
+  game' <- case input of
+    'k' -> tryMove MoveUp game
+    'h' -> tryMove MoveLeft game
+    'l' -> tryMove MoveRight game
     'q' -> exitSuccess
     _ -> warnInvalidInput input >> pure Nothing
+  maybe (gameLoop game) gameLoop game'
 
-  case board' of
-    Just b -> repl (nextPlayer player) b
-    Nothing -> repl player board
-
-tryMove :: MoveDirection -> Player -> Board -> IO (Maybe Board)
-tryMove d p b = case move d p b of
-  Right b' -> pure $ Just b'
-  Left OutOfBounds -> warnOutOfBounds >> pure Nothing
-  Left Occupied -> warnOccupied >> pure Nothing
+tryMove :: MoveDirection -> Game -> IO (Maybe Game)
+tryMove d g@Game {player} = case move d g of
+  Right g' -> pure $ Just g'
+  Left MoveOutOfBounds -> warnOutOfBounds >> pure Nothing
+  Left MoveOccupied -> warnOccupied >> pure Nothing
+  Left MoveFinished -> drawFinished player >> exitSuccess
+  Left MoveTrapped -> drawTrapped player >> exitSuccess
