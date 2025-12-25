@@ -7,7 +7,7 @@ import Types (Vec)
 
 type Board = [[Tile]]
 
-data Tile = TileEmpty | TileHead Player | TileTail Player | TileBlock | TileFinish deriving (Eq)
+data Tile = TileEmpty | TileHead Player | TileTail | TileBlock deriving (Eq)
 
 parseBoard :: Text -> Maybe Board
 parseBoard contents =
@@ -17,8 +17,7 @@ parseBoard contents =
 parseTile :: String -> Maybe Tile
 parseTile "." = Just TileEmpty
 parseTile "x" = Just TileBlock
-parseTile "@" = Just $ TileHead Red
-parseTile "~" = Just TileFinish
+parseTile "o" = Just $ TileHead Red
 parseTile _ = Nothing
 
 findHead :: Board -> Vec
@@ -33,5 +32,4 @@ isHead _ = False
 
 isOccupied :: Tile -> Bool
 isOccupied TileEmpty = False
-isOccupied TileFinish = False
 isOccupied _ = True

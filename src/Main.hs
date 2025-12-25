@@ -1,10 +1,12 @@
 import Game
   ( Game (Game, board, player),
+    GameState (GameFinished, GameOngoing, GameTrapped),
     MoveDirection (MoveLeft, MoveRight, MoveUp),
-    MoveError (MoveFinished, MoveOccupied, MoveOutOfBounds, MoveTrapped),
+    MoveError (MoveOccupied, MoveOutOfBounds),
+    getGameState,
     move,
   )
-import Player (Player (Red))
+import Player (Player (Red), prevPlayer)
 import Resource (loadRandomBoard)
 import System.Exit (exitFailure, exitSuccess)
 import System.IO (BufferMode (NoBuffering), hSetBuffering, hSetEcho, stdin)
@@ -28,8 +30,13 @@ main = do
   gameLoop Game {board = board', player = Red}
 
 gameLoop :: Game -> IO ()
-gameLoop game@Game {board} = do
+gameLoop game@Game {board, player} = do
   drawUi board
+
+  case getGameState board of
+    GameOngoing -> pure ()
+    GameTrapped -> drawTrapped (prevPlayer player) >> exitSuccess
+    GameFinished -> drawFinished (prevPlayer player) >> exitSuccess
 
   input <- getChar
   game' <- case input of
@@ -41,9 +48,7 @@ gameLoop game@Game {board} = do
   maybe (gameLoop game) gameLoop game'
 
 tryMove :: MoveDirection -> Game -> IO (Maybe Game)
-tryMove d g@Game {player} = case move d g of
+tryMove d g = case move d g of
   Right g' -> pure $ Just g'
   Left MoveOutOfBounds -> warnOutOfBounds >> pure Nothing
   Left MoveOccupied -> warnOccupied >> pure Nothing
-  Left MoveFinished -> drawFinished player >> exitSuccess
-  Left MoveTrapped -> drawTrapped player >> exitSuccess

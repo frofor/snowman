@@ -9,7 +9,7 @@ module Ui
   )
 where
 
-import Board (Board, Tile (TileBlock, TileEmpty, TileFinish, TileHead, TileTail))
+import Board (Board, Tile (TileBlock, TileEmpty, TileHead, TileTail))
 import Control.Monad (void)
 import Player (Player (Blue, Red))
 import System.Console.ANSI (clearScreen)
@@ -29,11 +29,9 @@ drawBoard = mapM_ $ putStrLn . unwords . map showTile
 
 showTile :: Tile -> String
 showTile TileEmpty = "."
-showTile (TileHead Red) = "\ESC[31m@\ESC[0m"
-showTile (TileHead Blue) = "\ESC[34m^\ESC[0m"
-showTile (TileTail Red) = "\ESC[31m*\ESC[0m"
-showTile (TileTail Blue) = "\ESC[34m*\ESC[0m"
-showTile TileFinish = "~"
+showTile (TileHead Red) = "\ESC[31mo\ESC[0m"
+showTile (TileHead Blue) = "\ESC[34mo\ESC[0m"
+showTile TileTail = "o"
 showTile TileBlock = "x"
 
 drawFinished :: Player -> IO ()
@@ -50,7 +48,7 @@ warnBoardParseError :: IO ()
 warnBoardParseError = warn "Can't parse board file!"
 
 warnInvalidInput :: Char -> IO ()
-warnInvalidInput = warn . ("Invalid input: '" ++) . show
+warnInvalidInput = warn . ("Invalid input: " ++) . show
 
 warnOutOfBounds :: IO ()
 warnOutOfBounds = warn "Can't move out of bounds!"
