@@ -10,7 +10,7 @@ import Game
     initGame,
     move,
   )
-import Player (Player (color, score), PlayerColor (PlayerRed), prevPlayerColor)
+import Player (Player (color, score), PlayerColor (PlayerRed), nextPlayerColor, prevPlayerColor)
 import Resource (loadRandomBoard)
 import System.Exit (exitFailure, exitSuccess)
 import System.IO (BufferMode (NoBuffering), hSetBuffering, hSetEcho, stdin)
@@ -30,7 +30,7 @@ main = do
   hSetBuffering stdin NoBuffering
   hSetEcho stdin False
 
-  board <- tryLoadBoard
+  board <- tryLoadBoard PlayerRed
   gameLoop $ initGame board
 
 gameLoop :: Game -> IO ()
@@ -50,27 +50,28 @@ gameLoop game@Game {board} = do
 
 onWin :: Game -> IO ()
 onWin game@Game {board, players, playerColor} = do
-  prevPlayer <- case Map.lookup (prevPlayerColor playerColor) players of
+  winner <- case Map.lookup (prevPlayerColor playerColor) players of
     Just p -> pure p
     Nothing -> error "Game should contain multiple players"
 
-  board' <- tryLoadBoard
-
-  let prevPlayer' = prevPlayer {score = score prevPlayer + 1}
-      players' = Map.insert (color prevPlayer) prevPlayer' players
-      game' = game {players = players', playerColor = PlayerRed}
+  let winner' = winner {score = score winner + 1}
+      winnerColor = color winner
+      players' = Map.insert winnerColor winner' players
+      starterColor = nextPlayerColor winnerColor
+      game' = game {players = players', playerColor = starterColor}
 
   drawUi game'
 
-  when (score prevPlayer' == 5) $ do
-    drawGameOver $ color prevPlayer
+  when (score winner' == 5) $ do
+    drawGameOver winnerColor
     exitSuccess
 
   case getGameState board of
     GameOngoing -> error "Game should not be ongoing"
-    GameTrapped -> warnTrapped $ color prevPlayer
-    GameFinished -> warnFinished $ color prevPlayer
+    GameTrapped -> warnTrapped winnerColor
+    GameFinished -> warnFinished winnerColor
 
+  board' <- tryLoadBoard starterColor
   gameLoop game' {board = board'}
 
 tryMove :: MoveDirection -> Game -> IO (Maybe Game)
@@ -79,7 +80,7 @@ tryMove d g = case move d g of
   Left MoveOutOfBounds -> warnOutOfBounds >> pure Nothing
   Left MoveOccupied -> warnOccupied >> pure Nothing
 
-tryLoadBoard :: IO Board
-tryLoadBoard = do
-  board <- loadRandomBoard
+tryLoadBoard :: PlayerColor -> IO Board
+tryLoadBoard playerColor = do
+  board <- loadRandomBoard playerColor
   maybe (warnBoardParseError >> exitFailure) pure board

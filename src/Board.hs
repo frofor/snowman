@@ -2,23 +2,23 @@ module Board (Board, Tile (..), findHead, isOccupied, parseBoard) where
 
 import Data.Text (Text)
 import Data.Text qualified as T
-import Player (PlayerColor (PlayerRed))
+import Player
 import Types (Vec)
 
 type Board = [[Tile]]
 
 data Tile = TileEmpty | TileHead PlayerColor | TileTail | TileBlock deriving (Eq)
 
-parseBoard :: Text -> Maybe Board
-parseBoard contents =
+parseBoard :: Text -> PlayerColor -> Maybe Board
+parseBoard contents playerColor =
   let rows = filter (\l -> not (T.null l) && T.head l /= '#') . T.lines $ contents
-   in mapM (mapM (parseTile . T.unpack) . T.words) rows
+   in mapM (mapM ((`parseTile` playerColor) . T.unpack) . T.words) rows
 
-parseTile :: String -> Maybe Tile
-parseTile "." = Just TileEmpty
-parseTile "x" = Just TileBlock
-parseTile "o" = Just $ TileHead PlayerRed
-parseTile _ = Nothing
+parseTile :: String -> PlayerColor -> Maybe Tile
+parseTile "." _ = Just TileEmpty
+parseTile "x" _ = Just TileBlock
+parseTile "o" c = Just $ TileHead c
+parseTile _ _ = Nothing
 
 findHead :: Board -> Vec
 findHead board =
