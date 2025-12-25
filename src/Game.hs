@@ -4,21 +4,29 @@ module Game
     MoveDirection (..),
     MoveError (..),
     getGameState,
+    initGame,
     move,
   )
 where
 
 import Board (Board, Tile (TileEmpty, TileHead, TileTail), findHead, isOccupied)
-import Player (Player, nextPlayer)
+import Data.Map.Strict (Map)
+import Data.Map.Strict qualified as Map
+import Player (Player, PlayerColor (PlayerBlue, PlayerRed), initPlayer, nextPlayerColor)
 import Types (Vec)
 
-data Game = Game {board :: Board, player :: Player}
+data Game = Game {board :: Board, players :: Map PlayerColor Player, playerColor :: PlayerColor}
 
-data GameState = GameOngoing | GameFinished | GameTrapped
+data GameState = GameOngoing | GameFinished | GameTrapped deriving (Eq)
 
 data MoveDirection = MoveUp | MoveLeft | MoveRight
 
 data MoveError = MoveOutOfBounds | MoveOccupied
+
+initGame :: Board -> Game
+initGame board =
+  let players = [(PlayerRed, initPlayer PlayerRed), (PlayerBlue, initPlayer PlayerBlue)]
+   in Game {board, players = Map.fromList players, playerColor = PlayerRed}
 
 getGameState :: Board -> GameState
 getGameState board
@@ -49,12 +57,12 @@ moveBy (x, y) game@Game {board}
     headRow = board !! hy
 
 moveTo :: Vec -> Game -> Game
-moveTo (x, y) game@Game {board, player} =
-  let player' = nextPlayer player
+moveTo (x, y) game@Game {board, playerColor} =
+  let playerColor' = nextPlayerColor playerColor
       (tx, ty) = findHead board
       tailRow = board !! ty
       tailRow' = take tx tailRow ++ [TileTail] ++ drop (tx + 1) tailRow
       board' = take ty board ++ [tailRow'] ++ drop (ty + 1) board
       headRow = board' !! y
-      headRow' = take x headRow ++ [TileHead player'] ++ drop (x + 1) headRow
-   in game {board = take y board' ++ [headRow'] ++ drop (y + 1) board', player = player'}
+      headRow' = take x headRow ++ [TileHead playerColor'] ++ drop (x + 1) headRow
+   in game {board = take y board' ++ [headRow'] ++ drop (y + 1) board', playerColor = playerColor'}

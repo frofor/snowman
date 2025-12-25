@@ -1,48 +1,57 @@
 module Ui
-  ( drawFinished,
-    drawTrapped,
+  ( drawGameOver,
     drawUi,
     warnBoardParseError,
+    warnFinished,
     warnInvalidInput,
     warnOccupied,
     warnOutOfBounds,
+    warnTrapped,
   )
 where
 
 import Board (Board, Tile (TileBlock, TileEmpty, TileHead, TileTail))
 import Control.Monad (void)
-import Player (Player (Blue, Red))
+import Data.List (intercalate)
+import Data.Map.Strict (Map)
+import Data.Map.Strict qualified as Map
+import Game (Game (Game, board, players))
+import Player (Player (score), PlayerColor (PlayerBlue, PlayerRed))
 import System.Console.ANSI (clearScreen)
 
-drawUi :: Board -> IO ()
-drawUi board = do
+drawUi :: Game -> IO ()
+drawUi Game {board, players} = do
   clearScreen
   putStrLn "'k' - Up"
   putStrLn "'h' - Left"
   putStrLn "'l' - Right"
   putStrLn "'q' - Quit"
   putStrLn ""
+  drawScore players
+  putStrLn ""
   drawBoard board
+
+drawScore :: Map PlayerColor Player -> IO ()
+drawScore = putStrLn . intercalate " : " . map (show . score) . Map.elems
 
 drawBoard :: Board -> IO ()
 drawBoard = mapM_ $ putStrLn . unwords . map showTile
 
 showTile :: Tile -> String
 showTile TileEmpty = "."
-showTile (TileHead Red) = "\ESC[31mo\ESC[0m"
-showTile (TileHead Blue) = "\ESC[34mo\ESC[0m"
+showTile (TileHead PlayerRed) = "\ESC[31mo\ESC[0m"
+showTile (TileHead PlayerBlue) = "\ESC[34mo\ESC[0m"
 showTile TileTail = "o"
 showTile TileBlock = "x"
 
-drawFinished :: Player -> IO ()
-drawFinished = putStrLn . (++ " finished the game!") . showPlayer
+drawGameOver :: PlayerColor -> IO ()
+drawGameOver playerColor = do
+  putStrLn ""
+  putStrLn $ showPlayerColor playerColor ++ " won the game!"
 
-drawTrapped :: Player -> IO ()
-drawTrapped = putStrLn . (++ " trapped other player!") . showPlayer
-
-showPlayer :: Player -> String
-showPlayer Red = "\ESC[31mRED\ESC[0m"
-showPlayer Blue = "\ESC[34mBLUE\ESC[0m"
+showPlayerColor :: PlayerColor -> String
+showPlayerColor PlayerRed = "\ESC[31mRED\ESC[0m"
+showPlayerColor PlayerBlue = "\ESC[34mBLUE\ESC[0m"
 
 warnBoardParseError :: IO ()
 warnBoardParseError = warn "Can't parse board file!"
@@ -55,6 +64,12 @@ warnOutOfBounds = warn "Can't move out of bounds!"
 
 warnOccupied :: IO ()
 warnOccupied = warn "Tile is already occupied!"
+
+warnFinished :: PlayerColor -> IO ()
+warnFinished = warn . (++ " finished the game!") . showPlayerColor
+
+warnTrapped :: PlayerColor -> IO ()
+warnTrapped = warn . (++ " trapped other player!") . showPlayerColor
 
 warn :: String -> IO ()
 warn text = do

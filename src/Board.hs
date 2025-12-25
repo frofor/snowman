@@ -2,12 +2,12 @@ module Board (Board, Tile (..), findHead, isOccupied, parseBoard) where
 
 import Data.Text (Text)
 import Data.Text qualified as T
-import Player (Player (Red))
+import Player (PlayerColor (PlayerRed))
 import Types (Vec)
 
 type Board = [[Tile]]
 
-data Tile = TileEmpty | TileHead Player | TileTail | TileBlock deriving (Eq)
+data Tile = TileEmpty | TileHead PlayerColor | TileTail | TileBlock deriving (Eq)
 
 parseBoard :: Text -> Maybe Board
 parseBoard contents =
@@ -17,7 +17,7 @@ parseBoard contents =
 parseTile :: String -> Maybe Tile
 parseTile "." = Just TileEmpty
 parseTile "x" = Just TileBlock
-parseTile "o" = Just $ TileHead Red
+parseTile "o" = Just $ TileHead PlayerRed
 parseTile _ = Nothing
 
 findHead :: Board -> Vec
