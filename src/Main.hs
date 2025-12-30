@@ -50,14 +50,14 @@ gameLoop game@Game {board} = do
     'h' -> tryMove MoveLeft game'
     'l' -> tryMove MoveRight game'
     'q' -> exitSuccess
-    _ -> warnInvalidInput input >> pure Nothing
+    _ -> warnInvalidInput input *> pure Nothing
   maybe (gameLoop game') gameLoop movedGame
 
 onWin :: Game -> IO ()
 onWin game@Game {board, players, playerColor} = do
-  winner <- case Map.lookup (prevPlayerColor playerColor) players of
-    Just p -> pure p
-    Nothing -> error "Game should contain multiple players"
+  let winner = case Map.lookup (prevPlayerColor playerColor) players of
+        Just p -> p
+        Nothing -> error "Game should contain multiple players"
 
   let winner' = winner {score = score winner + 1}
       winnerColor = color winner
@@ -82,10 +82,10 @@ onWin game@Game {board, players, playerColor} = do
 tryMove :: MoveDirection -> Game -> IO (Maybe Game)
 tryMove d g = case move d g of
   Right g' -> pure $ Just g'
-  Left MoveOutOfBounds -> warnOutOfBounds >> pure Nothing
-  Left MoveOccupied -> warnOccupied >> pure Nothing
+  Left MoveOutOfBounds -> warnOutOfBounds *> pure Nothing
+  Left MoveOccupied -> warnOccupied *> pure Nothing
 
 tryLoadBoard :: PlayerColor -> IO Board
 tryLoadBoard playerColor = do
   board <- loadRandomBoard playerColor
-  maybe (warnBoardParseError >> exitFailure) pure board
+  maybe (warnBoardParseError *> exitFailure) pure board
