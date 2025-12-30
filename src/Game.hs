@@ -4,12 +4,14 @@ module Game
     MoveDirection (..),
     MoveError (..),
     getGameState,
+    getPossibleMoves,
     initGame,
     move,
   )
 where
 
 import Board (Board, Tile (TileEmpty, TileHead, TileTail), findHead, isOccupied)
+import Data.Either (isRight)
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
 import Player (Player, PlayerColor (PlayerBlue, PlayerRed), initPlayer, nextPlayerColor)
@@ -40,6 +42,9 @@ getGameState board
       board !! (y - 1) !! x /= TileEmpty
         && (x == 0 || row !! (x - 1) /= TileEmpty)
         && (x == length row - 1 || row !! (x + 1) /= TileEmpty)
+
+getPossibleMoves :: Game -> [MoveDirection]
+getPossibleMoves g = [d | d <- [MoveUp, MoveLeft, MoveRight], isRight $ move d g]
 
 move :: MoveDirection -> Game -> Either MoveError Game
 move MoveUp = moveBy (0, -1)

@@ -7,6 +7,7 @@ import Game
     MoveDirection (MoveLeft, MoveRight, MoveUp),
     MoveError (MoveOccupied, MoveOutOfBounds),
     getGameState,
+    getPossibleMoves,
     initGame,
     move,
   )
@@ -37,16 +38,20 @@ gameLoop :: Game -> IO ()
 gameLoop game@Game {board} = do
   when (getGameState board /= GameOngoing) $ onWin game
 
-  drawUi game
+  let game' = case getPossibleMoves game of
+        [d] -> either (error "Automove should be valid") id $ move d game
+        _ -> game
+
+  drawUi game'
 
   input <- getChar
-  game' <- case input of
-    'k' -> tryMove MoveUp game
-    'h' -> tryMove MoveLeft game
-    'l' -> tryMove MoveRight game
+  movedGame <- case input of
+    'k' -> tryMove MoveUp game'
+    'h' -> tryMove MoveLeft game'
+    'l' -> tryMove MoveRight game'
     'q' -> exitSuccess
     _ -> warnInvalidInput input >> pure Nothing
-  maybe (gameLoop game) gameLoop game'
+  maybe (gameLoop game') gameLoop movedGame
 
 onWin :: Game -> IO ()
 onWin game@Game {board, players, playerColor} = do
