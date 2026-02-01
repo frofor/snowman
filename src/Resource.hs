@@ -18,7 +18,7 @@ loadRandomBoard playerColor = do
       index <- randomRIO (0, length names - 1)
       let name = names !! index
       board <- loadBoard name playerColor
-      pure $ Just $ either (Left . RandomBoardLoadError name) Right board
+      pure $ Just $ either (\e -> Left $ RandomBoardLoadError {name, origin = e}) Right board
 
 loadBoard :: String -> PlayerColor -> IO (Either BoardParseError Board)
 loadBoard name playerColor = do
