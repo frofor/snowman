@@ -22,9 +22,9 @@ import System.Console.ANSI (clearScreen)
 drawUi :: Game -> IO ()
 drawUi Game {board, players} = do
   clearScreen
-  putStrLn "'k' - Up"
-  putStrLn "'h' - Left"
-  putStrLn "'l' - Right"
+  putStrLn "'k', '↑' - Up"
+  putStrLn "'h', '←' - Left"
+  putStrLn "'l', '→' - Right"
   putStrLn "'q' - Quit"
   putStrLn ""
   drawScore players
@@ -56,7 +56,7 @@ showPlayerColor PlayerBlue = "\ESC[34mBLUE\ESC[0m"
 warnBoardParseError :: IO ()
 warnBoardParseError = warn "Can't parse board file!"
 
-warnInvalidInput :: Char -> IO ()
+warnInvalidInput :: String -> IO ()
 warnInvalidInput = warn . ("Invalid input: " ++) . show
 
 warnOutOfBounds :: IO ()

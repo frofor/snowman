@@ -43,13 +43,24 @@ gameLoop game@Game {board} = do
 
   drawUi game'
 
-  input <- getChar
-  movedGame <- case input of
+  c <- getChar
+  movedGame <- case c of
     'k' -> tryMove MoveUp game'
     'h' -> tryMove MoveLeft game'
     'l' -> tryMove MoveRight game'
     'q' -> exitSuccess
-    _ -> warnInvalidInput input >> pure Nothing
+    '\ESC' -> do
+      c2 <- getChar
+      if c2 == '['
+        then do
+          c3 <- getChar
+          case c3 of
+            'A' -> tryMove MoveUp game'
+            'D' -> tryMove MoveLeft game'
+            'C' -> tryMove MoveRight game'
+            _ -> warnInvalidInput [c, c2, c3] >> pure Nothing
+        else warnInvalidInput [c, c2] >> pure Nothing
+    _ -> warnInvalidInput [c] >> pure Nothing
   maybe (gameLoop game') gameLoop movedGame
 
 onGameOver :: Game -> IO ()
