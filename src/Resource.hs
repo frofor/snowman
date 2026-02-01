@@ -1,19 +1,26 @@
-module Resource (loadRandomBoard) where
+module Resource (RandomBoardLoadError (..), loadRandomBoard) where
 
-import Board (Board, parseBoard)
+import Board (Board, BoardParseError, parseBoard)
 import Data.List (isSuffixOf)
 import Data.Text qualified as T
 import Player (PlayerColor)
 import System.Directory (getDirectoryContents)
 import System.Random (randomRIO)
 
-loadRandomBoard :: PlayerColor -> IO (Maybe Board)
+data RandomBoardLoadError = RandomBoardLoadError {name :: String, origin :: BoardParseError}
+
+loadRandomBoard :: PlayerColor -> IO (Maybe (Either RandomBoardLoadError Board))
 loadRandomBoard playerColor = do
   names <- filter (".board" `isSuffixOf`) <$> getDirectoryContents "resources/boards"
-  index <- randomRIO (0, length names - 1)
-  loadBoard (names !! index) playerColor
+  if null names
+    then pure Nothing
+    else do
+      index <- randomRIO (0, length names - 1)
+      let name = names !! index
+      board <- loadBoard name playerColor
+      pure $ Just $ either (Left . RandomBoardLoadError name) Right board
 
-loadBoard :: String -> PlayerColor -> IO (Maybe Board)
+loadBoard :: String -> PlayerColor -> IO (Either BoardParseError Board)
 loadBoard name playerColor = do
   contents <- readFile $ "resources/boards/" ++ name
   pure $ parseBoard (T.pack contents) playerColor

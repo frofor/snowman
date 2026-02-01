@@ -1,4 +1,4 @@
-module Board (Board, Tile (..), findHead, isOccupied, parseBoard) where
+module Board (Board, BoardParseError (..), Tile (..), findHead, isOccupied, parseBoard) where
 
 import Data.Text (Text)
 import Data.Text qualified as T
@@ -9,22 +9,29 @@ type Board = [[Tile]]
 
 data Tile = TileEmpty | TileHead PlayerColor | TileTail | TileBlock deriving (Eq)
 
-parseBoard :: Text -> PlayerColor -> Maybe Board
+data BoardParseError = InvalidTile String | HeadNotFound | MultipleHeads
+
+parseBoard :: Text -> PlayerColor -> Either BoardParseError Board
 parseBoard contents playerColor =
   let rows = filter (\l -> not (T.null l) && T.head l /= '#') . T.lines $ contents
-   in mapM (mapM ((`parseTile` playerColor) . T.unpack) . T.words) rows
+   in mapM (mapM ((`parseTile` playerColor) . T.unpack) . T.words) rows >>= ensureSingleHead
 
-parseTile :: String -> PlayerColor -> Maybe Tile
-parseTile "." _ = Just TileEmpty
-parseTile "x" _ = Just TileBlock
-parseTile "o" c = Just $ TileHead c
-parseTile _ _ = Nothing
+parseTile :: String -> PlayerColor -> Either BoardParseError Tile
+parseTile "." _ = Right TileEmpty
+parseTile "x" _ = Right TileBlock
+parseTile "o" c = Right $ TileHead c
+parseTile s _ = Left $ InvalidTile s
+
+ensureSingleHead :: Board -> Either BoardParseError Board
+ensureSingleHead board = case concatMap (filter isHead) board of
+  [] -> Left HeadNotFound
+  [_] -> Right board
+  _ -> Left MultipleHeads
 
 findHead :: Board -> Vec
-findHead board =
-  case [(x, y) | (y, row) <- zip [0 ..] board, (x, cell) <- zip [0 ..] row, isHead cell] of
-    (p : _) -> p
-    _ -> error "Board should contain head"
+findHead board = case [(x, y) | (y, row) <- zip [0 ..] board, (x, t) <- zip [0 ..] row, isHead t] of
+  [p] -> p
+  _ -> error "Board should contain head"
 
 isHead :: Tile -> Bool
 isHead (TileHead _) = True

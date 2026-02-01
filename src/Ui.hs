@@ -1,7 +1,8 @@
 module Ui
-  ( drawGameOver,
+  ( drawBoardNotFound,
+    drawBoardParseError,
+    drawGameOver,
     drawUi,
-    warnBoardParseError,
     warnFinished,
     warnInvalidInput,
     warnOccupied,
@@ -10,7 +11,11 @@ module Ui
   )
 where
 
-import Board (Board, Tile (TileBlock, TileEmpty, TileHead, TileTail))
+import Board
+  ( Board,
+    BoardParseError (HeadNotFound, InvalidTile, MultipleHeads),
+    Tile (TileBlock, TileEmpty, TileHead, TileTail),
+  )
 import Control.Monad (void)
 import Data.List (intercalate)
 import Data.Map.Strict (Map)
@@ -37,10 +42,22 @@ drawScore = putStrLn . intercalate " : " . map (show . score) . Map.elems
 drawBoard :: Board -> IO ()
 drawBoard = mapM_ $ putStrLn . unwords . map showTile
 
+drawBoardNotFound :: IO ()
+drawBoardNotFound =
+  putStrLn "No \x1b[34m*.board\x1b[0m file found in \x1b[34mresources/boards/\x1b[0m"
+
+drawBoardParseError :: String -> BoardParseError -> IO ()
+drawBoardParseError name e =
+  putStrLn $
+    "Failed to parse \x1b[34m" ++ name ++ "\x1b[0m: " ++ case e of
+      InvalidTile t -> "Invalid tile: " ++ show t
+      HeadNotFound -> "Head doesn't exist"
+      MultipleHeads -> "Board contains multiple heads"
+
 showTile :: Tile -> String
 showTile TileEmpty = "."
-showTile (TileHead PlayerRed) = "\ESC[31mo\ESC[0m"
-showTile (TileHead PlayerBlue) = "\ESC[34mo\ESC[0m"
+showTile (TileHead PlayerRed) = "\x1b[31mo\x1b[0m"
+showTile (TileHead PlayerBlue) = "\x1b[34mo\x1b[0m"
 showTile TileTail = "o"
 showTile TileBlock = "x"
 
@@ -50,11 +67,8 @@ drawGameOver playerColor = do
   putStrLn $ showPlayerColor playerColor ++ " won the game!"
 
 showPlayerColor :: PlayerColor -> String
-showPlayerColor PlayerRed = "\ESC[31mRED\ESC[0m"
-showPlayerColor PlayerBlue = "\ESC[34mBLUE\ESC[0m"
-
-warnBoardParseError :: IO ()
-warnBoardParseError = warn "Can't parse board file!"
+showPlayerColor PlayerRed = "\x1b[31mRED\x1b[0m"
+showPlayerColor PlayerBlue = "\x1b[34mBLUE\x1b[0m"
 
 warnInvalidInput :: String -> IO ()
 warnInvalidInput = warn . ("Invalid input: " ++) . show

@@ -12,13 +12,14 @@ import Game
     move,
   )
 import Player (Player (color, score), PlayerColor (PlayerRed), nextPlayerColor, prevPlayerColor)
-import Resource (loadRandomBoard)
+import Resource (RandomBoardLoadError (RandomBoardLoadError), loadRandomBoard)
 import System.Exit (exitFailure, exitSuccess)
 import System.IO (BufferMode (NoBuffering), hSetBuffering, hSetEcho, stdin)
 import Ui
-  ( drawGameOver,
+  ( drawBoardNotFound,
+    drawBoardParseError,
+    drawGameOver,
     drawUi,
-    warnBoardParseError,
     warnFinished,
     warnInvalidInput,
     warnOccupied,
@@ -98,4 +99,7 @@ tryMove d g = case move d g of
 tryLoadBoard :: PlayerColor -> IO Board
 tryLoadBoard playerColor = do
   board <- loadRandomBoard playerColor
-  maybe (warnBoardParseError >> exitFailure) pure board
+  case board of
+    Just (Right b) -> pure b
+    Just (Left (RandomBoardLoadError name origin)) -> drawBoardParseError name origin >> exitFailure
+    Nothing -> drawBoardNotFound >> exitFailure
