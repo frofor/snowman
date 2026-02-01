@@ -3,8 +3,8 @@ module Game
     GameState (..),
     MoveDirection (..),
     MoveError (..),
+    autoMove,
     getGameState,
-    getPossibleMoves,
     initGame,
     move,
   )
@@ -42,6 +42,11 @@ getGameState board
       board !! (y - 1) !! x /= TileEmpty
         && (x == 0 || row !! (x - 1) /= TileEmpty)
         && (x == length row - 1 || row !! (x + 1) /= TileEmpty)
+
+autoMove :: Game -> Game
+autoMove game = case getPossibleMoves game of
+  [d] -> either (error "Automove should be valid") autoMove $ move d game
+  _ -> game
 
 getPossibleMoves :: Game -> [MoveDirection]
 getPossibleMoves g = [d | d <- [MoveUp, MoveLeft, MoveRight], isRight $ move d g]

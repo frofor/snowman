@@ -6,8 +6,8 @@ import Game
     GameState (GameFinished, GameOngoing, GameTrapped),
     MoveDirection (MoveLeft, MoveRight, MoveUp),
     MoveError (MoveOccupied, MoveOutOfBounds),
+    autoMove,
     getGameState,
-    getPossibleMoves,
     initGame,
     move,
   )
@@ -36,9 +36,11 @@ main = do
 
 gameLoop :: Game -> IO ()
 gameLoop game@Game {board} = do
-  when (getGameState board /= GameOngoing) $ onWin game
+  when (getGameState board /= GameOngoing) $ onGameOver game
 
-  let game' = autoMove game
+  let game'@Game {board = board'} = autoMove game
+  when (getGameState board' /= GameOngoing) $ onGameOver game'
+
   drawUi game'
 
   input <- getChar
@@ -50,8 +52,8 @@ gameLoop game@Game {board} = do
     _ -> warnInvalidInput input >> pure Nothing
   maybe (gameLoop game') gameLoop movedGame
 
-onWin :: Game -> IO ()
-onWin game@Game {board, players, playerColor} = do
+onGameOver :: Game -> IO ()
+onGameOver game@Game {board, players, playerColor} = do
   let winner = case Map.lookup (prevPlayerColor playerColor) players of
         Just p -> p
         Nothing -> error "Game should contain multiple players"
@@ -75,11 +77,6 @@ onWin game@Game {board, players, playerColor} = do
 
   board' <- tryLoadBoard starterColor
   gameLoop game' {board = board'}
-
-autoMove :: Game -> Game
-autoMove game = case getPossibleMoves game of
-  [d] -> either (error "Automove should be valid") autoMove $ move d game
-  _ -> game
 
 tryMove :: MoveDirection -> Game -> IO (Maybe Game)
 tryMove d g = case move d g of
