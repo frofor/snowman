@@ -47,7 +47,7 @@ gameLoop game@Game {board} = do
     'h' -> tryMove MoveLeft game'
     'l' -> tryMove MoveRight game'
     'q' -> exitSuccess
-    _ -> warnInvalidInput input *> pure Nothing
+    _ -> warnInvalidInput input >> pure Nothing
   maybe (gameLoop game') gameLoop movedGame
 
 onWin :: Game -> IO ()
@@ -84,10 +84,10 @@ autoMove game = case getPossibleMoves game of
 tryMove :: MoveDirection -> Game -> IO (Maybe Game)
 tryMove d g = case move d g of
   Right g' -> pure $ Just g'
-  Left MoveOutOfBounds -> warnOutOfBounds *> pure Nothing
-  Left MoveOccupied -> warnOccupied *> pure Nothing
+  Left MoveOutOfBounds -> warnOutOfBounds >> pure Nothing
+  Left MoveOccupied -> warnOccupied >> pure Nothing
 
 tryLoadBoard :: PlayerColor -> IO Board
 tryLoadBoard playerColor = do
   board <- loadRandomBoard playerColor
-  maybe (warnBoardParseError *> exitFailure) pure board
+  maybe (warnBoardParseError >> exitFailure) pure board
