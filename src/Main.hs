@@ -38,10 +38,7 @@ gameLoop :: Game -> IO ()
 gameLoop game@Game {board} = do
   when (getGameState board /= GameOngoing) $ onWin game
 
-  let game' = case getPossibleMoves game of
-        [d] -> either (error "Automove should be valid") id $ move d game
-        _ -> game
-
+  let game' = autoMove game
   drawUi game'
 
   input <- getChar
@@ -78,6 +75,11 @@ onWin game@Game {board, players, playerColor} = do
 
   board' <- tryLoadBoard starterColor
   gameLoop game' {board = board'}
+
+autoMove :: Game -> Game
+autoMove game = case getPossibleMoves game of
+  [d] -> either (error "Automove should be valid") autoMove $ move d game
+  _ -> game
 
 tryMove :: MoveDirection -> Game -> IO (Maybe Game)
 tryMove d g = case move d g of
